@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bootstrap demo</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+
+    <link
+      href="
+https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.min.css
+"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body style="height: 100vh">
+    <div class="h-100 d-flex justify-content-center align-items-center">
+      <div class="card m-auto p-2" style="max-width: 60rem">
+        <form
+          id="formObject"
+          class="form-container"
+          method="POST"
+          onsubmit="onSubmitForm(event)"
+          enctype="multipart/form-data"
+        >
+          <h5 class="card-title mb-3">Seleccione el archivo json EIR</h5>
+
+          <div class="mb-3">
+            <input name="file" class="form-control" type="file" />
+          </div>
+
+          <button type="submit" class="btn btn-primary m-auto">Submit</button>
+        </form>
+      </div>
+
+      <div id="ajax-Loading" class="wrap-loading">
+        <div class="loading loading-4"></div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/sweetalert2@7.8.2/dist/sweetalert2.all.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
+
+    <script>
+      async function onSubmitForm(e) {
+        e.preventDefault();
+        const loader = document.getElementById("ajax-Loading");
+        loader.style.display = "block";
+
+        try {
+          const jsonData = await readJsonFile();
+          const blob = await sendData(jsonData);
+          downloadFile(blob);
+        } catch (err) {
+          console.log(err);
+          swal("Error!", err.message, "error");
+        } finally {
+          loader.style.display = "none";
+        }
+
+        return false;
+      }
+
+      function downloadFile(blob) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "eir.docx";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+
+      async function sendData(body) {
+        try {
+          const resp = await fetch("http://localhost:4040/eir", {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          });
+          return resp.blob();
+        } catch (err) {
+          throw new Error("Error trying to send fetch data");
+        }
+      }
+
+      function readJsonFile() {
+        return new Promise((res, rej) => {
+          const fileInput = document.getElementsByName("file")[0];
+          const file = fileInput.files[0];
+
+          if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+              const fileContent = event.target.result;
+              try {
+                const jsonData = JSON.parse(fileContent);
+
+                res(jsonData);
+              } catch (error) {
+                rej(error);
+              }
+            };
+            reader.readAsText(file);
+          } else rej("no info");
+        });
+      }
+    </script>
+  </body>
+</html>
