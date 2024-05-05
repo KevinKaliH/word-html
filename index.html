@@ -61,7 +61,7 @@ https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.min.css
         try {
           const jsonData = await readJsonFile();
           const blob = await sendData(jsonData);
-          downloadFile(blob);
+          downloadFile(blob, jsonData["NombreArchivo"]);
         } catch (err) {
           console.log(err);
           swal("Error!", err.message, "error");
@@ -72,11 +72,11 @@ https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.min.css
         return false;
       }
 
-      function downloadFile(blob) {
+      function downloadFile(blob, fileName) {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "eir.docx";
+        a.download = String(fileName ?? "eir.docx").split(".")[0] + "";
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -93,6 +93,8 @@ https://cdn.jsdelivr.net/npm/sweetalert2@11.10.8/dist/sweetalert2.min.css
             },
             body: JSON.stringify(body),
           });
+
+          console.log(resp);
           return resp.blob();
         } catch (err) {
           throw new Error("Error trying to send fetch data");
